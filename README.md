@@ -1,4 +1,4 @@
-# Hello from MISAKA! ⚡️
+# Hello from MISAKA ⚡️
 
 **MISAKA** is a post-quantum native Layer 1 blockchain built in Rust. It combines a Narwhal/Bullshark DAG consensus engine with NIST-standardized post-quantum cryptography — **ML-DSA-65 (FIPS 204)** for signatures and **ML-KEM-768 (FIPS 203)** for P2P key exchange — so that the network remains secure even against an adversary with a large-scale quantum computer.
 
