@@ -4,7 +4,7 @@
 
 MISAKA targets ~2 second block times, a transparent UTXO model, and a public PoS validator set. The project ships a full node, REST/Explorer API, CLI wallet, staking frontend, and a community mining client.
 
-For a deeper technical overview, see the network repository: <https://github.com/MISAKA-BTC/Quantum-MISAKA/blob/main/README_ja.md>
+For a deeper technical overview, see the network repository: <https://github.com/MISAKA-BTC/whitepaper>
 
 ---
 
