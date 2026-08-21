@@ -1,36 +1,39 @@
-# Hello from MISAKA ⚡️
+# MISAKA — the proof of work is an LLM inference
 
-**Post-quantum-native UTXO Layer 1 · Kaspa-derived PoW BlockDAG · Verified-LLM-Token-weighted BFT finality · Optional EVM execution lane**
+**PALW-RC · Post-quantum UTXO Layer 1 · Kaspa-derived BlockDAG · one canonical inference = one block ticket**
 
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/Rust-1.88%2B-orange.svg)](Cargo.toml)
-[![Network](https://img.shields.io/badge/network-testnet--10-yellow.svg)](https://misakascan.com)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://github.com/MISAKA-BTC/misakas/blob/main/LICENSE)
+[![Rust](https://img.shields.io/badge/Rust-1.88%2B-orange.svg)](https://github.com/MISAKA-BTC/misakas/blob/main/Cargo.toml)
+![Ruleset](https://img.shields.io/badge/ruleset-PALW--RC%20(ADR--0042)-purple.svg)
 
-**misakas** is an independent Layer 1 network written in Rust and derived from
-[`rusty-kaspa`](https://github.com/kaspanet/rusty-kaspa). Its native UTXO transaction path is
-post-quantum-only: transaction authorization uses **ML-DSA-87** (FIPS 204, NIST security category
-5), native addresses and scripts accept only the ML-DSA-87 P2PKH form, and legacy
-secp256k1/Schnorr/ECDSA and P2SH paths are excluded from native consensus, mempool, and wallet
-operation.
+MISAKA is an independent Layer 1 written in Rust and derived from
+[`rusty-kaspa`](https://github.com/kaspanet/rusty-kaspa). Two things make it its own protocol:
 
-On top of that PoW base, MISAKA is building a finality overlay whose voting power comes from
-**independently verified LLM inference** rather than from capital: *Verified LLM Token-weighted BFT*
-(ADR-0024). Block production stays PoW/GHOSTDAG — the overlay decides finality, never ordering.
+1. **PALW — Proof of Advanced LLM Work.** The scarce resource that produces and orders blocks is
+   **one deterministic LLM inference per attempt**, not a hash. A block is won by running a model,
+   and the network convicts a liar by re-deriving arithmetic — never by re-running the model on
+   every node.
+2. **Post-quantum native authorization.** Every native transaction is signed with **ML-DSA-87**
+   (FIPS 204, NIST category 5) over a 64-byte BLAKE2b-512 consensus identity. Legacy
+   secp256k1/Schnorr/ECDSA and P2SH are excluded from the native lane entirely.
 
-misakas has its own genesis, address namespace, consensus identity, and chain state. It is **not
-compatible with Kaspa**, earlier `kaspa-pq` networks, or the older Narwhal/Bullshark-based MISAKA
-experiments.
+The active engineering line is **PALW-RC**: the mainnet-candidate ruleset specified by **ADR-0042** — *one atomic activation bundle, one fork choice, one fingerprint*. An RC network and mainnet ship
+the **same consensus bytes**; the only permitted differences are network identity, genesis
+allocation, address prefix, ports/seeds and faucet. That sameness is checkable by machine, not by
+prose: the ruleset id is a hash committed into genesis.
 
 > [!IMPORTANT]
-> The public network currently operated by this repository is the experimental **`testnet-10`**
-> network. The `mainnet` parameter set exists in the codebase but **no supported misakas mainnet is
-> launched**. Do not treat testnet balances, RPC stability, or activation parameters as production
-> guarantees.
+> **Status: implemented, consensus-inert.** The RC ruleset, the arithmetic court, the class
+> economy and the free-prompt lane are implemented on the PALW lineage and gated end to end, but
+> **no shipped preset carries `PalwConsensusMode::ConsensusV2`** — a test pins that
+> (`params_do_not_install_a_palw_fence`). Nothing here is live money. Launching an RC network is
+> the remaining step, and it needs the soak-measured parameters plus the operator items
+> (seeds, ports, public entry) that ADR-0035 §6 owns.
 
 > [!NOTE]
-> The post-quantum claim applies to the **native UTXO authorization path**, validator attestations,
-> and 64-byte consensus identity. P2P transport is not currently part of that claim. The optional
-> EVM lane intentionally uses Ethereum-compatible secp256k1/ECDSA in a separate signature domain.
+> The post-quantum claim covers **native transaction authorization, validator signing, and the
+> 64-byte consensus identity**. It does not cover P2P transport, and the optional EVM lane
+> deliberately uses Ethereum-compatible secp256k1/ECDSA in a separate signature domain.
 
 ---
 
@@ -41,304 +44,279 @@ experiments.
 | Website | [misakachain.com](https://misakachain.com/) |
 | Source code | [MISAKA-BTC/misakas](https://github.com/MISAKA-BTC/misakas) |
 | Releases | [misakas releases](https://github.com/MISAKA-BTC/misakas/releases) |
-| Testnet explorer | [misakascan.com](https://misakascan.com/) |
-| Protocol documents | [`docs/`](https://github.com/MISAKA-BTC/misakas/tree/main/docs) |
+| Explorer | [misakascan.com](https://misakascan.com/) |
+| Protocol documents | [`docs/`](https://github.com/MISAKA-BTC/misakas/tree/main/docs) · [`docs/adr/`](https://github.com/MISAKA-BTC/misakas/tree/main/docs/adr) |
 | Whitepaper / specification | [MISAKA-BTC/specification](https://github.com/MISAKA-BTC/specification) |
 | Issue tracker | [GitHub Issues](https://github.com/MISAKA-BTC/misakas/issues) |
 | Security policy | [`SECURITY.md`](https://github.com/MISAKA-BTC/misakas/blob/main/SECURITY.md) |
 | Discord | [discord.gg/C4nDFkJE4x](https://discord.gg/C4nDFkJE4x) |
 | Telegram | [t.me/misakachain](https://t.me/misakachain) |
 
-## Current network status
-
-| Item | Current state |
-|---|---|
-| Public network | `testnet-10` |
-| Base consensus | Kaspa-derived PoW BlockDAG with GHOSTDAG ordering |
-| Block production target | 10 DAG blocks per second (100 ms target interval) |
-| Native ledger | Transparent UTXO model |
-| Native transaction signature | ML-DSA-87 / FIPS 204 |
-| Finality extension | Stake-bonded DNS finality overlay on top of PoW (active from genesis) |
-| Finality weighting | Bonded stake today; **Verified-LLM-Token (VLT) weighting implemented and shipped dormant** behind two DAA fences |
-| Compute-backed token (TOK) | Design draft + Phase A implementation; **not shipped on any network** |
-| EVM | Feature-gated, Shanghai-compatible execution lane on testnet |
-| Mainnet | Parameters defined; not launched or endorsed for production |
-
-Operators must run matching node and miner builds from the same release whenever a release changes
-consensus-committed fields.
-
-## Architecture
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│              PoW BlockDAG + GHOSTDAG ordering                   │
-│             10 BPS target · Kaspa-derived core                  │
-├─────────────────────────────────────────────────────────────────┤
-│  DNS finality overlay: bonded ML-DSA-87 validators              │
-│  round 1 prevote (attestation shard) → round 2 lock+precommit   │
-│  voting weight: bonded stake  →  verified LLM compute (VLT)     │
-│  PoW still produces blocks and drives GHOSTDAG selection        │
-├───────────────────────────────┬─────────────────────────────────┤
-│ Native UTXO lane              │ Optional EVM lane               │
-│                               │                                 │
-│ ML-DSA-87 only                │ revm / Shanghai                 │
-│ Transparent UTXO accounting   │ EIP-155 / EIP-1559              │
-│ 64-byte BLAKE2b-512 identity  │ secp256k1/ECDSA domain          │
-│ misaka / misakatest addresses │ Selected-parent acceptance      │
-├───────────────────────────────┴─────────────────────────────────┤
-│ gRPC · wRPC Borsh/JSON · Ethereum HTTP JSON-RPC                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Base consensus and native UTXO lane
-
-- **PoW BlockDAG:** block production and tip selection remain PoW/GHOSTDAG rather than PoS or a
-  Narwhal/Bullshark BFT committee.
-- **ML-DSA-87 authorization:** native transaction and validator signing use ML-DSA-87 with explicit
-  domain separation.
-- **PQ-only native scripts:** the standard spend path is ML-DSA-87 P2PKH. Legacy native
-  secp256k1/Schnorr/ECDSA signatures, legacy addresses, and P2SH are disabled.
-- **64-byte consensus identity:** block hashes, transaction IDs, Merkle commitments, parent IDs, and
-  UTXO commitments use the misakas `Hash64` design based on BLAKE2b-512.
-- **Independent network:** native address prefixes are `misaka:`, `misakatest:`, `misakasim:`, and
-  `misakadev:` according to network.
-- **Layer-0 PoW:** the bundled PQ miner grinds the BLAKE2b-512 Layer-0 proof-of-work path.
-
-### DNS finality overlay
-
-misakas adds a stake-bonded validator overlay without replacing PoW block production. Validators
-lock native UTXOs (production floor: **20,000,000 MSK**), sign epoch attestations with ML-DSA-87,
-and contribute to stake-confirmed canonical anchors. On the `testnet`/`mainnet` parameter sets
-confirmation is **two-dimensional**: an anchor needs both accumulated blue work depth and attested
-stake depth. The overlay adds reorg protection, validator rewards, slashing, and anti-equivocation
-state while GHOSTDAG and blue work remain the underlying ordering mechanism.
-
-Finality is a **two-round accountable commit**, not a single tally:
-
-1. **Prevote** — the existing attestation shard (unchanged on the wire).
-2. **Lock + precommit** — signed only for an epoch whose prevote quorum this chain already shows,
-   and carrying the `(locked_epoch, locked_hash)` the signer held, inside the signed digest.
-
-An anchor is DNS-confirmed only when **both** rounds clear quorum over the same pinned weight table.
-Two precommits naming one `locked_epoch` with different anchors are self-contained evidence that the
-signer held two locks at one height — and burn the bond. Locks are read from the chain, never from
-local memory, so a restarted or restored node restates the lock everyone else already holds a
-signature for.
-
-Validator operation is documented in
-[`docs/validator-runbook.md`](https://github.com/MISAKA-BTC/misakas/blob/main/docs/validator-runbook.md).
-A separate [`kaspa-pq-signer`](https://github.com/MISAKA-BTC/misakas/tree/main/kaspa-pq-signer)
-daemon can keep the validator key outside the validator process, enforce a signing policy, and
-guard against equivocation through a protected Unix-domain socket.
-
 ---
 
-## Verified LLM Token-weighted BFT (VLT)
+## PALW in one page
 
-> Status: **implemented, shipped dormant.** Both activation fences are `u64::MAX` on every shipped
-> preset, so every live network — including `testnet-10` — still weighs finality votes by bonded
-> stake and is byte-identical to its pre-VLT behaviour. Governing record:
-> [ADR-0024](https://github.com/MISAKA-BTC/misakas/blob/main/docs/adr/0024-verified-llm-token-weighted-bft.md).
-
-Ordinary proof-of-stake maps *money → power*. VLT replaces the **source** of that power with
-**verified useful compute**: a validator's voting weight is the amount of independently re-executed
-LLM inference it recently supplied. The bond stops *being* the power and starts *collateralizing*
-it — it remains the participation floor and the cap on how much compute weight one identity may
-carry.
-
-### How weight is computed
+### The lottery: a ticket, not a hash
 
 ```text
-x_j     = ρ(S_j)·(a·t_j^in + b·t_j^out)   if Verify(S_j, R_j, C_j) = 1, else 0
-X_i(e)  = Σ_j x_j                          validator i's certified jobs in epoch e
-C_i(E)  = Σ_{τ=1..K} d_τ · X_i(E − τ)      decayed credit window, 1 = d_1 ≥ … ≥ d_K > 0
-W_i(E)  = min{ C_i(E), λ·B_i(E) }          compute, capped by bonded collateral
-W(E)    = Σ_i W_i(E)                       Q(E) = ⌊2·W(E)/3⌋ + 1
+challenge = H(network ‖ pre_pow_hash ‖ timestamp ‖ nonce ‖ class_id ‖ bond)
+              │
+              ▼
+        ONE deterministic inference on a pinned execution class
+              │
+              ▼
+        execution commitment  ──▶  attempt envelope  ──▶  digest < bits ?
 ```
 
-- `t_in` / `t_out` are prefill and decode tokens; `a`, `b` weight them (decode is bandwidth-bound
-  and costs more). `ρ(S_j)` is the model cost factor — a **consensus parameter**, never an executor
-  input, so nobody can invent a fictitious expensive model. An unregistered model mints zero.
-- Credit **decays**: stopped hardware loses voting power within a window (shipped calibration:
-  K = 96 epochs, 0.97/epoch, half-life ≈ 23 epochs).
-- Epoch credit becomes **binary on the exact BFT threshold** `Q(E) = ⌊2W(E)/3⌋ + 1`, restoring the
-  quorum-intersection safety argument that a graded stake score could not support.
-- Buying stake buys no votes: `C_i = 0 ⇒ W_i = 0` regardless of bond size.
+One inference is one ticket: header-bound, non-transferable, progress-free. Re-rolling any chain
+hash therefore costs a full inference — which is exactly the property every downstream randomness
+consumer (panel draws, ticket seeds, anchors) leans on.
 
-### How compute is verified
+Hashing is retained where it belongs — block and transaction identity, Merkle commitments,
+artifact pinning, signature-input compression. What PALW removes is narrower and exact:
+`H(header) < target` as a **block-production right**, hash as an **emergency production path**, and
+cheap hash as a **fork-choice weight** term (**ADR-0038**, **ADR-0039**).
 
-The job lifecycle runs entirely as overlay transactions on subnetwork ids `0x14`–`0x1a`:
+### The verification: a full node runs no model
+
+This is the decision that makes LLM work usable as L1 work. Under ADR-0042 Decision 4 the consensus
+build carries **no model dependency at all** — a node that registers no PALW runtime prices an
+inference tag as *failed PoW*, it does not panic and it does not load a 1 GiB runtime to validate a
+header. Validation is optimistic and sampled: a block is admitted on its commitments, a sortitioned
+bonded **panel** audits it, and a dispute is settled by an **arithmetic court** that bisects the
+execution trace down to a single tile and adjudicates that tile exactly.
 
 ```text
-LlmJobSpec ─▶ Commitment(0x17) ─▶ sortitioned verifier committee ─▶ Certificate(0x14)
-                                        Verdicts(0x18) / Challenge(0x15)
-                                        └─ survives the challenge window ─▶ credit
+attempt ─▶ Provisional ─▶ PanelBound ─▶ ReceiptLicensed ─▶ Final
+                 │                             │
+                 └──────── refuted ────────────┴──▶ Voided (bond slashed)
 ```
 
-- **`CanonicalFullReplay`** is the only consensus-eligible verification relation in v0.1: the
-  JobSpec pins model weights, runtime, quantization, input, sampling seed, and token limit, so an
-  honest verifier must reproduce the executor's receipt byte-for-byte. Committee: 3 drawn,
-  2 confirmations.
-- Acceptance is **refutation-dominant** — one `Refuted` verdict fails the job even if the
-  confirmation count is met; the challenge path then decides who is slashed.
-- Verifiers are bonded, independently sortitioned, and must not be the executor. Auditing is paid;
-  executing is not — executing is already self-interested, since it buys voting weight.
-- Consensus only ever checks commitments, never tensors. Running the model as executor or verifier
-  is node-side software outside the consensus surface.
-- A bond may only be slashed at acceptance by an offence **provable from the transaction itself**
-  (e.g. contradictory verification, equivocation, a broken precommit lock). Unprovable claims deny
-  a certificate its credit but never burn a bond.
-
-### Why the denominator is pinned
-
-`Q(E) = ⌊2W(E)/3⌋ + 1` is a two-thirds threshold only if every branch arguing about epoch `E`
-divides by the same `W(E)`. So weights come from a **`VltEpochSnapshot`** — a credit table plus the
-block it was taken at. The reorg gate builds exactly one, pinned at the selected-chain common
-ancestor of the two branches, and hands the same one to both; a bond or a certificate that exists
-only above the pin weighs zero on both sides. Votes sign a commitment to the frozen snapshot, so a
-vote counted under one denominator cannot be replayed under another.
-
-### Two-fence activation
-
-Turning the overlay on and handing it the vote are different risks, so they are different hard forks:
-
-| Fence | At and above it | Finality |
+| Block state | live weight | safe weight |
 |---|---|---|
-| `vlt_shadow_activation_daa_score` | certificates credited, committees drawn, verdicts counted and paid, settled challenges slashing, credit accumulator filling | unchanged — bonded stake |
-| `vlt_activation_daa_score` | `W_i(E) = min{C_i(E), λ·B_i(E)}` becomes voting weight; credit rule becomes `Q(E)` | replaced |
+| Provisional / PanelBound / ReceiptLicensed | bounded immature pwu (β·pwu, β ≤ 1000‰) | 0 |
+| Final | full pwu | full pwu |
+| Voided | 0 | 0 |
 
-The interval between them is not slack, it is the **soak**: `C_i(E)` sums a credit window, so
-flipping both at once would hand voting power to an empty table and stall finality. A pre-flight
-check (`vlt_params_consistent()`) refuses a preset whose fences are closer together than the window
-it takes for compute credit to mean anything, and a network that fails it stays in Bootstrap with
-the reorg gate dormant rather than arming a gate over a denominator that has not filled.
+A fresh tip is always weighable (so the chain never stalls waiting for an audit), while nothing
+irreversible — reward spendability included — happens before `Final`. Both weights come from **one
+fork-choice authority**: virtual selection, header processing, IBD, pruning and finality all ask
+the same function, so no two subsystems can pick different tips on one DAG.
 
-Rollout is four evidenced steps: five-validator private devnet → shadow mode → testnet shadow fork
-→ testnet weight fork; mainnet repeats the last two with its own heights.
+### What the court can prove
 
-### Verified so far
+The court is **proof-carrying**. A refuter supplies the operands it claims were mis-computed, and
+those operands are verified against the class's `artifact_root` — so an adjudicating node holds the
+model's *root*, never its weights. Court cost is therefore **independent of model size**: a bigger
+model costs one terminal adjudication more arithmetic, not every node more storage. Conviction is
+what stands between a fabricated block and full weight, so a class may carry **no fork-choice
+weight until its kernel catalog is complete** and every operation it can reach is adjudicable.
 
-On a five-validator private devnet, with quota plan 8/5/3/2/2:
+### Cadence and identity
 
-- Frozen voting snapshots carried the intended weights exactly (400/250/150/100/100 M µRTE,
-  `W = 1e9`, `Q = 666,666,667`), root-identical on all five nodes and stable across restarts.
-- Quorum behaves as specified: 600 and 650 weight units of signers never met quorum; 800 and 750
-  certified, with strictly ascending certificate epochs recorded in a durable
-  `DnsFinalityCertificate`.
-- Equivocation on prevote, precommit and lock each burned the offender's bond, while the filing
-  epoch's snapshot and certificate held — the frozen denominator keeps its epoch, and slashes reach
-  the denominator forward, never retroactively.
+PALW is frozen at **120 s per block**. Every window in the ruleset is DAA-denominated, which is why
+a PALW network needs its own identity rather than a parameter edit: at a 100 ms cadence the same
+numbers mean something else, and `finality_depth < w_challenge` fails on depth alone.
+`assemble_palw_rc_identity_v2` refuses to mint an identity unless five gates agree — the bundle is
+runnable, the catalog matches what the ruleset committed to, the cadence and fences are right, the
+genesis objects actually apply (the first transition runs and its state root exists), and the
+court's ladder is provisioned for the **whole step space** rather than for the classes this genesis
+happens to carry.
 
 ---
 
-## Compute-backed native token — Token (TOK)
+## PALW work sources
 
-> Status: **design draft v0.1 + Phase A implementation on a branch. Not active on any network.**
+Two algorithms, one atomic bundle. A bundle carrying only one of them is a different ruleset,
+detectable by fingerprint.
 
-VLT weight is deliberately non-transferable and decaying — it is voting power, not money. The Token
-Program adds a separate, protocol-native asset ledger whose flagship asset **Token (TOK)** is minted
-in proportion to the *same* verified compute measure:
+| Algo id | Lane | What wins the block |
+|---:|---|---|
+| `6` | **Attempt** (`PalwAttemptEnvelopeV2`) | a nonce-driven canonical inference whose digest clears `bits` |
+| `7` | **Receipt** (**ADR-0044**) | a certified receipt from an inference a **user actually wanted** |
+
+### The free-prompt lane — your own chat inference mines
 
 ```text
-reward_i(E) = R(E) · X_i(E) / X(E)
+your app ──POST /v1/chat/completions──▶ misaka-palw-gateway ──▶ pinned worker
+                                             │                      │
+                                    OpenAI-style reply        ONE inference:
+                                    + roots + CU in-band      answer + trace/output/schedule roots
 ```
 
-In one line: **mine verifiable LLM compute instead of hashes.** `R(E)` is a fixed emission schedule
-with halving steps; total issuance is decided by the schedule, while measured compute `X(E)` decides
-only the split — so difficulty is emergent, as the ratio `X(E)/R(E)`. The harder the network works,
-the more compute one TOK costs, exactly as PoW difficulty retargets.
+You run your own model for your own work — code review, drafting, summarizing — and **that same
+single inference** is what mines. The chain never assigns the prompt, there is no second
+mining-only run, a receipt is usable exactly once, and block weight is never revised after
+acceptance. Certification runs through the same claim lattice the attempt lane uses: commit the
+trace, draw an audit panel from randomness that becomes known only *after* the commitment, certify,
+then let the certified receipt win a ticket. Two grinding surfaces in the naive construction are
+closed structurally — only attempt blocks carry beacon randomness, and tickets are quantized so an
+executor cannot shape a free field the inference did not consume. Pricing (CU) is derived from the
+executed shape, conservatively, and never from a self-declared number.
 
-Hard boundaries the design commits to:
-
-- **A TOK balance grants zero voting weight.** Finality power comes from `C_i(E)` and the `λ·B_i`
-  cap alone; the asset cannot buy it.
-- **Emission is fork-invariant**: it settles from the pinned VLT snapshot after the challenge window
-  fully closes, so compute that exists only on a losing branch is never monetized, and no clawback
-  is needed.
-- **One protocol implementation** of balances, transfers and burns (SPL-style), not a contract
-  standard with per-deployment differences.
-- Usefulness is *not* judged by consensus — only the objective quantities `ρ`, `a`, `b` enter.
-
-Emission constants (`R0`, halving interval, settlement offset) are deliberately unfrozen until
-testnet shadow measurement.
+Full nodes admit a receipt block **with no model**, exactly as they admit an attempt block.
 
 ---
 
-## Post-quantum security scope
+## `PALW-BASE-0` — the integer-only class
 
-The following are valid descriptions of the present implementation:
+There is no hash floor. The liveness floor is a **class**: a portable, integer-only execution class
+held permanently Active (**ADR-0039**, **ADR-0040**).
+While at least one authorized class can produce certified work, the chain continues; when none can,
+it **halts loudly** rather than manufacturing hash blocks. That cost is signed for deliberately.
 
-- Native transaction authorization uses **ML-DSA-87**.
-- Native secp256k1/Schnorr/ECDSA authorization is disabled in PQ consensus mode.
-- Validator attestations, precommits, and the remote-signer path use ML-DSA-87.
-- Consensus identity is 64-byte BLAKE2b-512-based `Hash64`.
-- The default `kaspad` build does not link the optional EVM/secp256k1 execution stack.
+| | |
+|---|---|
+| Arithmetic | no IEEE-754 value, no `libm` symbol, no FP instruction on the consensus path |
+| Representation | weights `int8` (per-output-channel scale), activations `int8`, accumulator `i32` |
+| Requantize | an **explicit** op with `(multiplier: i32, shift: u8)` — never an implicit narrowing |
+| Scales | frozen at registration; no per-inference rescaling anywhere |
+| Verification | a second implementation with exact `i128` division and no shift operator, plus vendored **gemmlowp** as an authorship-independent oracle, differenced bit-for-bit |
 
-The following claims would be inaccurate:
+Removing floating point removes the entire category of divergence that a float class would have to
+transcribe away — glibc `expf`/`logf`/`sinf`/`cosf`, FMA contraction, and the reduction order of
+every threaded sum. An integer class is why the court is reachable at all.
 
-- “All network traffic is post-quantum encrypted.”
-- “The EVM lane is post-quantum.”
-- “misakas uses Narwhal/Bullshark consensus.”
-- “misakas is a pure PoS chain.”
-- “LLM compute replaces proof-of-work.” — VLT weights *finality votes*; PoW still produces and
-  orders blocks.
-- “Verified-LLM-Token weighting is live on testnet.” — it is implemented and dormant behind two
-  fences.
-- “ML-DSA-65 is the current native signature scheme.”
+---
 
-Transport-layer post-quantum confidentiality remains outside the current public PQ claim; an
-ML-KEM-based transport design would require a separate implemented and audited protocol change.
+## The class economy is chain state
 
-## Native supply
+Registering a second model must be a **transaction, not a release** (**ADR-0045**):
 
-The native network parameters define a maximum supply of **28 billion MSK**:
+```text
+pwu     — derived, per candidate point:  claim == palw_pwu_v1(class_target, pwu_per_inference)
+budget  — derived, per epoch boundary:   ⌊tol · E · s_c / (1000 · denom_c)⌋ blocks, frozen in state
+shares  — granted, per registration:     conserved to 1000‰ by donation arithmetic, rooted
+```
 
-- **13 billion MSK** in genesis allocations; and
-- **15 billion MSK** in network emission over 20 years, following the configured 5% annual
-  exponential-decay schedule.
+- **pwu has exactly one legal value.** It is the counted step-leaf count of the class's canonical
+  inference, checked as equality against rooted chain state — not a self-declared number under a
+  ceiling. Anything else is `PwuClaimNotDerived`.
+- **Each class gets its own DAA retarget domain**, so a fast class cannot starve a slow one and a
+  heavy class is not priced in a currency that structurally starves it.
+- **A share is granted at registration** and conserved to 1000‰ by largest-remainder donation from
+  the incumbents. A share below the minimum grantable value is refused, because a zero share is a
+  zero epoch budget — "a dead class registered as if it worked".
+- **Post-genesis admission exists.** `verify_class_admission_v2` restates the genesis loader's
+  checks against a single registration, *deriving* rather than reading — the reachable kernel set
+  from the profile's own nodes, both leaf counts from the step function, and a catalog entry
+  identical to the one the genesis path produces. A registrant supplies only what no function can
+  invent: the artifact root, the economics, and the canonical job.
 
-TOK, if and when activated, is a **separate asset** on its own ledger and does not draw from the MSK
-supply schedule.
+---
+
+## Model roadmap — from the floor to 35B and 70B
+
+The end state is explicit: **MISAKA is intended to carry large models — 35B- and 70B-class — as
+registered execution classes**, so that the work securing the chain is inference people would want
+anyway. That is a roadmap, and the sections below separate what is measured today from what must
+still land.
+
+### Where the ladder stands
+
+| Stage | Geometry | Status |
+|---|---|---|
+| **Floor** — `PALW_RC_BASE0_GEOMETRY` | 4 layers, `d_model` 256 | ships as the RC's liveness floor. Not a performance claim: it is the class that guarantees *someone* can always produce a block |
+| **Qwen-scale** | Qwen2.5-1.5B (28 layers, 1536/8960, 12 heads / 2 kv) and 3B (36 layers, 2048/11008, 16 / 2) | profiles landed, geometries taken from the real `config.json` and `safetensors` header, kernel **coverage 100 %**; context budget not yet solved (below) |
+| **7B → 35B → 70B** | dense transformer families over the same closed kernel catalog | roadmap. The chain-side machinery is built for it; the arithmetic pipeline is the open work |
+
+### Why large classes are architecturally reachable
+
+Four properties were built with exactly this in mind, and none of them degrades with model size:
+
+1. **Full nodes never run the model.** Verification is sampled and optimistic, so a 70B class does
+   not put a 70B runtime on every node.
+2. **The court holds a root, not the weights.** Proven operands are verified against
+   `artifact_root`, so adjudication cost is independent of parameter count.
+3. **Adding a class is a chain event.** Registration is admitted against derived facts, given a
+   granted share and its own DAA domain — no flag day, no coordinated release.
+4. **The court ladder was provisioned once, at genesis, for the whole step space.**
+   `max_step_leaf_count` is inside the ruleset id, so a class deeper than the ladder would need a
+   *new network*. The RC therefore refuses to mint an identity whose ladder is anything other than
+   the full `PALW_STEP_MAX_LEAVES` (2²², a 22-round bisection). Four extra prosecution rounds buy
+   every class that could ever be adjudicable — this is the one decision that would have expired.
+
+### What still has to land
+
+- **Context budget.** A class is admissible only if its **longest** job — the whole declared
+  context as prefill plus one decode — fits the ladder. Checking the *typical* job instead would
+  admit a class an attacker picks the job length for. At `tile_len` 128 the shipped Qwen profiles
+  price at 132 M (1.5B) and 220 M (3B) leaves against a 4.19 M cap: inadmissible as declared.
+  `tile_len` is the knob, and it trades context against court granularity — at a 4096 context,
+  1.5B needs `tile_len` 16,384 and 3B needs 65,536, which is the maximum the type allows. **Larger
+  classes therefore need more than the tile knob**: a shorter declared context, a widened step
+  space in a future ruleset, or segmented adjudication. This is stated as an open problem, not a
+  solved one.
+- **The PTQ pipeline**, whose engine gaps decide how faithful a dense port can be: an explicit
+  RMSNorm gain (`MulElem`, rather than folding it into the next matmul and burying the outliers),
+  **GQA** (`n_head_kv < n_heads` — a shape field and an index change, no new kernel), and
+  **per-output-channel requantization** (the highest-leverage quality knob, already available
+  without touching the catalog). All three change the class id and the step space, so they are
+  settled *before* a profile is frozen, never after.
+- **Depth and the residual stream.** Measured 2026-08-21: depth is **not** a wall — 24–32 layers is
+  arithmetically reachable, and the residual highway carries ~7 adds before a feature survives only
+  as a sign. What the `i8` residual binds is *quality*, not liveness: at depth 24–32 a unity-gain
+  residual costs 2–3 bits of code range per write. The only change that enlarges that budget is a
+  wider `AddElem` (an `i16` accumulate buys 10–11 bits), which is a new kernel and an ADR-0040
+  amendment — the deliberate cost of going much deeper than Qwen scale.
+- **Hardware classes.** A class is scoped to its instruction set and build profile, by design: two
+  builds that disagree by one ULP are two networks. Accelerated (GPU/NPU) classes for large models
+  arrive as their own pinned classes with their own determinism evidence, never as a silent
+  widening of an existing one.
+
+Each larger class arrives the same way: an artifact and shape profile, complete kernel coverage, a
+ladder-admissible worst-case job, a derived pwu, a granted share, and its own retarget domain.
+
+---
+
+## The post-quantum native lane
+
+| Area | MISAKA |
+|---|---|
+| Transaction signature | **ML-DSA-87** (pk 2592 B / sig 4627 B); secp256k1/Schnorr/ECDSA disabled in native consensus |
+| Sighash | `calc_mldsa87_signature_hash` → 64-byte `Hash64` |
+| Address | `PubKeyHashMlDsa87` only; payload = keyed BLAKE2b-512 over the verifying key, 64 B |
+| Standard script | ML-DSA-87 P2PKH only; P2SH disabled |
+| Consensus identity | 64-byte BLAKE2b-512 (`Hash64`) — block hash, txid, Merkle roots, UTXO commitment, parents |
+| Build hygiene | `scripts/pq-ci-guard.sh` hard-gates that neither `kaspa-consensus` nor `kaspad` links secp256k1 |
+| Supply | **28 B MSK cap** — 13 B genesis allocation + 15 B emission over 20 years (5 %/yr exponential decay) |
+
+Accurate claims: native authorization uses ML-DSA-87; native secp256k1/Schnorr/ECDSA is disabled;
+validator and court signing use ML-DSA-87; consensus identity is 64-byte BLAKE2b-512-based.
+
+Claims that would be **wrong**: "all network traffic is post-quantum encrypted"; "the EVM lane is
+post-quantum"; "MISAKA is a pure PoS chain"; "MISAKA uses Narwhal/Bullshark"; "LLM compute is a
+reward subsidy on top of hash PoW" — under ADR-0038/0039 the inference *is* the consensus work.
 
 ### Ecosystem token note
 
-The Solana SPL mint used by the broader MISAKA ecosystem is a separate market representation; it is
-**not** a native misakas UTXO address, **not** an EVM contract deployed on this testnet, and **not**
-the compute-minted TOK described above.
+The Solana SPL mint used by the broader MISAKA ecosystem is a separate market representation. It is
+**not** a native MISAKA UTXO address, **not** an EVM contract on any MISAKA network, and **not**
+block reward.
 
 | Resource | Value |
 |---|---|
 | SPL mint | `4e2DhohUAJ9EbrLey3rVVgFQzLCAeeBirSbdhqrh9snX` |
 | Market page | [DEX Screener](https://dexscreener.com/solana/hvcuswpugjg8omexyaexjs7wxf8izdwqgljqyxfehhqc) |
 
-Always verify token information through the official website before interacting with a contract or
-mint.
+Always verify token information through the official website before interacting with a mint.
 
 ## Optional EVM lane
 
-The EVM implementation is an **opt-in node feature**, not part of the default secp-free build.
-It provides an Ethereum-compatible execution environment while preserving a separate native PQ UTXO
-lane.
+An opt-in node feature, not part of the default secp-free build.
 
 | Property | Value |
 |---|---|
-| EVM implementation | [`revm`](https://github.com/bluealloy/revm) |
-| EVM revision | Shanghai |
+| Implementation / revision | [`revm`](https://github.com/bluealloy/revm), Shanghai |
 | Chain ID | `0x4D534B` (`5067595`) |
-| Supported envelopes | Legacy, EIP-2930, EIP-1559 |
-| JSON-RPC | HTTP on `--evm-rpc-listen` (normally port `8545`) |
-| Execution model | Selected-parent chain with mergeset-delayed acceptance |
-| Fees | EIP-1559-style base fee and gas accounting |
+| Envelopes | Legacy, EIP-2930, EIP-1559 |
+| JSON-RPC | HTTP on `--evm-rpc-listen` |
+| Execution model | Selected-parent chain, mergeset-delayed acceptance |
 | Native-unit bridge | `1 sompi = 10^10 wei` |
 
-The lane supports normal EVM transfers and contracts, an in-consensus **UTXO → EVM deposit** flow,
-and an **EVM → UTXO withdrawal** path through the MISAKA withdrawal precompile. It is Ethereum
-execution-compatible rather than Ethereum-consensus-compatible: there is no Beacon Chain, Engine
-API, Ethereum devp2p, or Ethereum PoS consensus. See
-[`docs/misaka-evm-design-v0.4.md`](https://github.com/MISAKA-BTC/misakas/blob/main/docs/misaka-evm-design-v0.4.md),
-[`docs/connecting-ethereum-tooling.md`](https://github.com/MISAKA-BTC/misakas/blob/main/docs/connecting-ethereum-tooling.md),
-and
-[`docs/evm-differences-from-ethereum.md`](https://github.com/MISAKA-BTC/misakas/blob/main/docs/evm-differences-from-ethereum.md).
+Ethereum **execution**-compatible, not Ethereum-consensus-compatible: no Beacon Chain, Engine API,
+devp2p or Ethereum PoS. See
+[`docs/misaka-evm-design-v0.4.md`](https://github.com/MISAKA-BTC/misakas/blob/main/docs/misaka-evm-design-v0.4.md).
 
 ---
 
@@ -346,24 +324,17 @@ and
 
 ### Requirements
 
-- Rust **1.88 or newer**
-- Git and a C/C++ build toolchain
-- Protocol Buffers compiler (`protoc`)
-- Clang / libclang for RocksDB bindings
-- OpenSSL development headers and `pkg-config`
-
-Ubuntu/Debian example:
+- Rust **1.88+**, Git, a C/C++ toolchain
+- `protoc` (gRPC), Clang / libclang (RocksDB), OpenSSL headers + `pkg-config`
 
 ```bash
 sudo apt update
-sudo apt install -y \
-  git curl build-essential pkg-config libssl-dev \
+sudo apt install -y git curl build-essential pkg-config libssl-dev \
   protobuf-compiler libprotobuf-dev clang libclang-dev
-
 rustup update
 ```
 
-### Clone and build the native node and tools
+### Node and tools
 
 ```bash
 git clone https://github.com/MISAKA-BTC/misakas.git
@@ -371,154 +342,115 @@ cd misakas
 
 cargo build --release \
   -p kaspad \
-  -p kaspa-pq-miner \
   -p kaspa-pq-validator \
   -p kaspa-pq-signer \
   -p misaka-cli --bin misaka
 ```
 
-The unified operator CLI is the `misaka` binary from the `misaka-cli` package — name both
-explicitly so Cargo never depends on workspace defaults. Prebuilt Linux binaries and `SHA256SUMS`
-are published on the
-[Releases](https://github.com/MISAKA-BTC/misakas/releases) page.
+The consensus build deliberately carries **no model dependency**. The PALW runtime crates are
+separate binaries a producer or auditor runs beside the node.
 
-### Build an EVM-enabled node
+### PALW producer / auditor side
 
 ```bash
-cargo build --release -p kaspad --features evm
+# the pinned worker (needs the pinned llama.cpp tree; its build.rs refuses to build blind)
+MISAKA_LLAMA_SRC=/path/to/llama.cpp cargo build --release -p misaka-palw-worker
+
+# the free-prompt gateway (ADR-0044): OpenAI-compatible front end, one inference
+cargo build --release -p misaka-palw-gateway
+
+# the integer-only class engine and its independent verification lane
+cargo build --release -p misaka-palw-base0
+cargo test    --release -p misaka-palw-base0-ref2
 ```
 
-Use a miner built from the **same source tag or commit** as the EVM-enabled node.
-
-## Run a `testnet-10` node
+A build's **runtime class** is part of consensus identity, not a preference. Check yours before
+producing anything:
 
 ```bash
-./target/release/kaspad --testnet --utxoindex --rpclisten-borsh=default --rpclisten-json=default
+MISAKA_PALW_GGUF=/path/to/model.gguf ./palw-worker --mode manifest
 ```
 
-The node discovers public testnet peers through the MISAKA DNS seeders
-(`seeder1.misakascan.com` / `seeder2.misakascan.com`). `--utxoindex` is required for wallet and
-validator funding lookups. Use `--enable-unsynced-mining` only for a deliberately isolated network:
-mining before you have synced to the public testnet forks you off from genesis.
+If `runtime_class_id` does not match the class you intend to join, you are out of class — your tags
+differ from everyone else's, and that looks like a network fault while being the opposite.
 
-### Default `testnet-10` ports
-
-| Interface | Port | Default state | Used by |
-|---|---:|---|---|
-| P2P | `26211` | Enabled | Node-to-node BlockDAG traffic |
-| gRPC | `26210` | Loopback, enabled | Miner and protobuf clients |
-| wRPC Borsh | `27210` | Disabled until configured | CLI wallet and validator sidecar |
-| wRPC JSON | `28210` | Disabled until configured | JSON WebSocket clients / explorer backends |
-| Ethereum JSON-RPC | `8545` | EVM build only; disabled until configured | ethers, viem, Hardhat, Foundry |
-
-Mainnet uses `26110/27110/28110` (P2P `26111`), devnet `26610/27610/28610` (P2P `26611`).
-Do not point a WebSocket wallet at the gRPC port.
-
-### Start the bundled miner
-
-Mine only after the node is synchronized with the public testnet, and only to a native 64-byte
-ML-DSA-87 `misakatest:` address:
+## Testing
 
 ```bash
-./target/release/kaspa-pq-miner --node-grpc 127.0.0.1:26210 --network-id testnet-10 --blocks 0 --min-block-interval-ms 250 --pay-address <misakatest:...>
+cargo test --release          # or: cargo nextest run --release
+./check                       # fmt, clippy, deps, and the PQ-only CI guard
 ```
 
-## Run a validator (testnet)
+Consensus, cryptographic, address, activation, court and class-economy changes require
+deterministic regression tests. Anything that alters accepted blocks, commitments, state roots,
+receipts or activation behaviour is a consensus change and is documented as one.
 
-The `kaspa-pq-validator` sidecar connects to a local node over wRPC and attests while its ML-DSA-87
-stake bond is active. Testnet enforces the production minimum of **20,000,000 MSK**
-(`2e15` sompi).
-
-```bash
-kaspa-pq-validator keygen --out val.seed --network testnet
-```
-
-```bash
-kaspa-pq-validator bond --node-rpc 127.0.0.1:27210 --validator-key val.seed --amount 2000000000000000 --network testnet-10
-```
-
-```bash
-kaspa-pq-validator run --node-rpc 127.0.0.1:27210 --validator-key val.seed --stake-bond <txid:index> --signed-epoch-db val.state --network testnet-10 --attest-poll-secs 3
-```
-
-Use a **fresh** `--signed-epoch-db` per network — reusing one across networks trips the
-anti-equivocation guard on overlapping epoch numbers. Once enough weight has attested,
-`getDnsConfirmation` reports `dnsConfirmed: true` plus a `lastDnsConfirmedAnchor`; treat that anchor
-as DNS-final. Full procedure:
-[`docs/validator-runbook.md`](https://github.com/MISAKA-BTC/misakas/blob/main/docs/validator-runbook.md).
+---
 
 ## Repository map
 
 | Path | Purpose |
 |---|---|
-| `kaspad/` | Full node daemon |
-| `consensus/` | GHOSTDAG, validation, DNS + VLT overlay, EVM commitments |
-| `consensus/core/src/vlt.rs` | VLT types, decay, weight, quorum, sortition, epoch snapshot |
-| `consensus/core/src/dns_finality.rs` | Prevote/precommit rounds, credit rule, quorum denominator |
-| `crypto/` | Hashes, addresses, scripts, Merkle and UTXO commitments |
-| `wallet/` | Native wallet libraries, CLI, WASM, key handling |
-| `pq-miner/`, `misaminer/` | BLAKE2b-512 Layer-0 CPU miner and mining client |
-| `kaspa-pq-validator/` | Stake-bonded validator sidecar |
-| `kaspa-pq-signer/` | Isolated validator signing daemon |
-| `misaka-cli/` | Unified operator CLI (`misaka` binary) |
+| `kaspad/` | Full node daemon (runs **no** model) |
+| `consensus/` | GHOSTDAG, validation, PALW state machine, court, fork choice, EVM commitments |
+| `consensus/core/src/palw_attempt_v2.rs` | Attempt envelope, ticket binding, canonical hash transcript |
+| `consensus/core/src/palw_state_v2.rs` | Candidate-scoped PALW chain state, deltas, state root |
+| `consensus/core/src/palw_admission_v2.rs` | Bond signature, class, pwu, epoch, per-bond exposure |
+| `consensus/core/src/palw_base0*.rs` | `PALW-BASE-0` consensus arithmetic |
+| `consensus/core/src/palw_class_admission_v2.rs` | Post-genesis class registration gate |
+| `consensus/core/src/palw_class_daa.rs` | Per-class retarget and epoch budgets |
+| `consensus/core/src/palw_rc_identity_v2.rs` | The five-gate RC identity assembly |
+| `misaka-palw-base0/` | The integer-only execution class: artifacts, engine, rotary table |
+| `misaka-palw-base0-ref2/` | Independent re-derivation + vendored gemmlowp oracle (test-only) |
+| `misaka-palw-gateway/` | Free-prompt OpenAI-compatible gateway (ADR-0044) |
+| `misaka-palw-worker/`, `misaka-palw-agent/` | Pinned runtime and its supervising UDS front |
+| `misaka-palw-reexecutor/`, `misaka-palw-shadow/` | Auditor capability emission, drill harness |
+| `crypto/`, `wallet/` | Hash64, ML-DSA-87 addresses/scripts, wallet libraries and CLI |
+| `kaspa-pq-validator/`, `kaspa-pq-signer/` | Bonded sidecar and isolated signing daemon |
 | `kaspa-evm/`, `rpc/eth/` | Feature-gated EVM executor and Ethereum JSON-RPC adapter |
-| `bridge/` | Stratum mining bridge and operator dashboard |
-| `misaka-dnsseeder/` | DNS peer seeder |
-| `docs/` | Specifications, ADRs, runbooks, compatibility notes |
+| `docs/` | ADRs, specifications, runbooks, audits, measurements |
 
 ## Key protocol documents
 
 | Document | Subject |
 |---|---|
+| **ADR-0038** (`docs/adr/0038-palw-is-the-consensus-work.md`) | **PALW is the consensus work** — the layer inversion, sampled verification |
+| **ADR-0039** (`docs/adr/0039-palw-only-block-production.md`) | A Base class instead of a hash floor; two-weight fork choice |
+| **ADR-0040** (`docs/adr/0040-palw-base-0-integer-arithmetic.md`) | `PALW-BASE-0` integer-only arithmetic |
+| **ADR-0042** (`docs/adr/0042-palw-mainnet-candidate-ruleset.md`) | **The PALW-RC ruleset** — one bundle, one fork choice, one fingerprint |
+| **ADR-0044** (`docs/adr/0044-palw-free-prompt-receipts.md`) | Free-prompt receipts — your own inference mines |
+| **ADR-0045** (`docs/adr/0045-palw-class-economy-on-chain.md`) | Derived pwu, epoch budgets, granted share table |
+| **ADR-0027** (`docs/adr/0027-palw-slash-unilateral-fraud-proofs.md`) / **ADR-0028** (`docs/adr/0028-palw-challenge-sampling-protocol.md`) | Unilateral fraud proofs, challenge sampling |
+| **ADR-0030** (`docs/adr/0030-palw-step-function-shape-profile.md`)–**ADR-0033** (`docs/adr/0033-palw-credit-gate-wiring.md`) | Step space, transcendentals, escrow, credit gate |
+| **ADR-0041** (`docs/adr/0041-palw-pruning-proof-verification.md`) | Pruning-proof verification |
 | [ADR-0019](https://github.com/MISAKA-BTC/misakas/blob/main/docs/adr/0019-mldsa87-migration.md) | ML-DSA-87 migration (governing PQ record) |
-| [ADR-0009](https://github.com/MISAKA-BTC/misakas/blob/main/docs/adr/0009-dns-probabilistic-finality.md) | DNS probabilistic finality overlay |
-| [ADR-0016](https://github.com/MISAKA-BTC/misakas/blob/main/docs/adr/0016-stake-locked-bond-utxos.md) / [ADR-0017](https://github.com/MISAKA-BTC/misakas/blob/main/docs/adr/0017-all-active-staker-attestation.md) | Stake-locked bonds, all-active attestation |
-| [ADR-0024](https://github.com/MISAKA-BTC/misakas/blob/main/docs/adr/0024-verified-llm-token-weighted-bft.md) | **Verified LLM Token-weighted BFT** |
-| [ADR-0025](https://github.com/MISAKA-BTC/misakas/blob/main/docs/adr/0025-chain-participation-and-ibd-candidate-selection.md) | Chain participation and IBD candidate selection |
-| [ADR-0020](https://github.com/MISAKA-BTC/misakas/blob/main/docs/adr/0020-selected-parent-evm-lane.md) / [ADR-0023](https://github.com/MISAKA-BTC/misakas/blob/main/docs/adr/0023-base-three-lane-execution.md) | Selected-parent EVM lane, three-lane execution |
-| [Compute Token Program v0.1](https://github.com/MISAKA-BTC/misakas/blob/main/docs/misaka-compute-token-program-design-v0.1.md) | Compute-backed TOK emission (draft) |
 | [`docs/kaspa-pq-spec.md`](https://github.com/MISAKA-BTC/misakas/blob/main/docs/kaspa-pq-spec.md) | Consensus-level PQ specification |
 
-## Testing and development
+ADR-0026 and later are the PALW lineage: they live in `docs/adr/` on the PALW branches and land
+on `main` together with the ruleset they specify. ADR-0019 and earlier are already on `main`.
 
-```bash
-cargo test --release
-```
-
-```bash
-cargo nextest run --release
-```
-
-```bash
-./check
-```
-
-`./check` runs formatting, clippy, dependency and PQ-only CI guards, including
-`scripts/pq-ci-guard.sh`, which hard-gates that neither `kaspa-consensus` nor `kaspad` links
-secp256k1. Consensus, cryptographic, address, activation, overlay, and bridge changes should include
-deterministic regression tests. Changes that alter accepted transactions, commitments, state roots,
-receipts, or activation behavior must be treated as consensus changes and documented accordingly.
+---
 
 ## Contributing
 
-Contributions are welcome from protocol engineers, wallet and RPC developers, node operators,
-miners, GPU/inference operators, auditors, documentation writers, and testers. Read
+Contributions are welcome from protocol engineers, quantization and inference-runtime specialists,
+wallet and RPC developers, auditors and node operators. Read
 [`CONTRIBUTING.md`](https://github.com/MISAKA-BTC/misakas/blob/main/CONTRIBUTING.md), open an issue
-for design-sensitive changes, and include tests and migration/activation notes in pull requests.
+for design-sensitive changes, and include tests and activation notes in pull requests. Work that
+touches an execution class must arrive with its determinism evidence.
 
 ## Security
 
 Do not publish suspected vulnerabilities as public issues. Follow
-[`SECURITY.md`](https://github.com/MISAKA-BTC/misakas/blob/main/SECURITY.md) and report them
-privately to the maintainers with the affected component, impact, and reproduction steps.
+[`SECURITY.md`](https://github.com/MISAKA-BTC/misakas/blob/main/SECURITY.md) and report privately
+with the affected component, impact and reproduction steps.
 
 ## Upstream attribution
 
-misakas is derived from [`rusty-kaspa`](https://github.com/kaspanet/rusty-kaspa). The project keeps
-many upstream `kaspa-*` crate and binary names for compatibility and to preserve source history.
-Credit for the original Rust Kaspa implementation belongs to the Kaspa developers; the MISAKA
-contributors maintain the independent network changes, post-quantum native transaction path,
-validator and verified-compute overlay, and optional EVM integration.
+MISAKA is derived from [`rusty-kaspa`](https://github.com/kaspanet/rusty-kaspa) and keeps many
+upstream `kaspa-*` crate and binary names to preserve source history. Credit for the original Rust
+Kaspa implementation belongs to the Kaspa developers; the MISAKA contributors maintain the
+independent network, the post-quantum native path, PALW, and the optional EVM integration.
 
 ## License
 
@@ -530,10 +462,7 @@ Copyright (c) 2026 MISAKA contributors
 Copyright (c) 2022-2024 Kaspa developers
 ```
 
-Third-party dependencies and copied components remain subject to their respective licenses and
-notices.
-
 ---
 
-<sub>misakas — post-quantum-native UTXO authorization on a Kaspa-derived PoW BlockDAG, with finality
-weighted by verified LLM compute.</sub>
+<sub>MISAKA — one canonical LLM inference is one block ticket, adjudicated by arithmetic, on a
+post-quantum UTXO BlockDAG.</sub>
