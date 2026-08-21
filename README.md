@@ -17,7 +17,7 @@ MISAKA is an independent Layer 1 written in Rust and derived from
    (FIPS 204, NIST category 5) over a 64-byte BLAKE2b-512 consensus identity. Legacy
    secp256k1/Schnorr/ECDSA and P2SH are excluded from the native lane entirely.
 
-The active engineering line is **PALW-RC**: the mainnet-candidate ruleset specified by **ADR-0042** — *one atomic activation bundle, one fork choice, one fingerprint*. An RC network and mainnet ship
+the mainnet-candidate ruleset specified by **ADR-0042** — *one atomic activation bundle, one fork choice, one fingerprint*. An RC network and mainnet ship
 the **same consensus bytes**; the only permitted differences are network identity, genesis
 allocation, address prefix, ports/seeds and faucet. That sameness is checkable by machine, not by
 prose: the ruleset id is a hash committed into genesis.
