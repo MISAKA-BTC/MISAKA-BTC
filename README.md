@@ -17,18 +17,19 @@ MISAKA is an independent Layer 1 written in Rust and derived from
    (FIPS 204, NIST category 5) over a 64-byte BLAKE2b-512 consensus identity. Legacy
    secp256k1/Schnorr/ECDSA and P2SH are excluded from the native lane entirely.
 
-the mainnet-candidate ruleset specified by **ADR-0042** — *one atomic activation bundle, one fork choice, one fingerprint*. An RC network and mainnet ship
-the **same consensus bytes**; the only permitted differences are network identity, genesis
-allocation, address prefix, ports/seeds and faucet. That sameness is checkable by machine, not by
-prose: the ruleset id is a hash committed into genesis.
+Together these form the mainnet-candidate ruleset specified by **ADR-0042** — *one atomic
+activation bundle, one fork choice, one fingerprint*. Network rules are machine-checkable through
+the ruleset and consensus fingerprints rather than prose. Testnet-11 is the currently launched RC;
+the repository's mainnet parameter set is not a launched network.
 
 > [!IMPORTANT]
-> **Status: implemented, consensus-inert.** The RC ruleset, the arithmetic court, the class
-> economy and the free-prompt lane are implemented on the PALW lineage and gated end to end, but
-> **no shipped preset carries `PalwConsensusMode::ConsensusV2`** — a test pins that
-> (`params_do_not_install_a_palw_fence`). Nothing here is live money. Launching an RC network is
-> the remaining step, and it needs the soak-measured parameters plus the operator items
-> (seeds, ports, public entry) that ADR-0035 §6 owns.
+> **Current status (2026-09-13): Testnet-11 Relaunch 5f is live.** It ships
+> `PalwConsensusMode::ConsensusV2` at a frozen 120-second block cadence. Build the current
+> [`misakas` `main`](https://github.com/MISAKA-BTC/misakas), select `testnet-11` explicitly and
+> verify consensus fingerprint
+> **`ae1d61628da50c7becea62f0a8f08c8654d190c60b2e104df0010b121ba4d3d8`**.
+> Mainnet parameters are defined but mainnet is not launched. ADR-0123's epoch-budget release is
+> implemented but remains dormant on every shipped preset.
 
 > [!NOTE]
 > The post-quantum claim covers **native transaction authorization, validator signing, and the
@@ -52,6 +53,27 @@ prose: the ruleset id is a hash committed into genesis.
 | Discord | [discord.gg/C4nDFkJE4x](https://discord.gg/C4nDFkJE4x) |
 | Telegram | [t.me/misakachain](https://t.me/misakachain) |
 
+### Start on the current public testnet
+
+```bash
+git clone https://github.com/MISAKA-BTC/misakas.git
+cd misakas
+git switch main
+cargo build --release -p kaspad -p misaka-cli
+./target/release/misaka --network testnet-11 mining setup
+```
+
+An existing PALW Bond can be checked without its key or class id:
+
+```bash
+./target/release/misaka --network testnet-11 bond status --bond <txid>:<index>
+```
+
+Use the [Testnet-11 mining runbook](https://github.com/MISAKA-BTC/misakas/blob/main/docs/testnet11-join-mining.md)
+and [operator Wiki](https://github.com/MISAKA-BTC/misakas/wiki/Testnet-11-Operator-UI-JA).
+Commands for retired testnet-10, testnet-21, testnet-200 or an older Testnet-11 relaunch are not
+current operator instructions.
+
 ---
 
 ## PALW in one page
@@ -72,10 +94,11 @@ One inference is one ticket: header-bound, non-transferable, progress-free. Re-r
 hash therefore costs a full inference — which is exactly the property every downstream randomness
 consumer (panel draws, ticket seeds, anchors) leans on.
 
-Hashing is retained where it belongs — block and transaction identity, Merkle commitments,
-artifact pinning, signature-input compression. What PALW removes is narrower and exact:
-`H(header) < target` as a **block-production right**, hash as an **emergency production path**, and
-cheap hash as a **fork-choice weight** term (**ADR-0038**, **ADR-0039**).
+Hashing is retained for block and transaction identity, Merkle commitments, artifact pinning and
+signature-input compression. PALW inference is the economic block-production right and work unit.
+The current ruleset also carries a bounded, fee-only bondless heartbeat lane to keep the DAA clock
+moving when bonded producers are silent; heartbeat hash work does not become PALW model work or a
+replacement economic mining lane.
 
 ### The verification: a full node runs no model
 
@@ -127,11 +150,11 @@ happens to carry.
 
 ## PALW work sources
 
-Two algorithms, one atomic bundle. A bundle carrying only one of them is a different ruleset,
-detectable by fingerprint.
+The current bundle separates economic inference work from its bounded liveness heartbeat.
 
 | Algo id | Lane | What wins the block |
 |---:|---|---|
+| `3` | **Heartbeat** | bounded fee-only liveness work; not PALW model work |
 | `6` | **Attempt** (`PalwAttemptEnvelopeV2`) | a nonce-driven canonical inference whose digest clears `bits` |
 | `7` | **Receipt** (**ADR-0044**) | a certified receipt from an inference a **user actually wanted** |
 
@@ -160,10 +183,9 @@ Full nodes admit a receipt block **with no model**, exactly as they admit an att
 
 ## `PALW-BASE-0` — the integer-only class
 
-There is no hash floor. The liveness floor is a **class**: a portable, integer-only execution class
-held permanently Active (**ADR-0039**, **ADR-0040**).
-While at least one authorized class can produce certified work, the chain continues; when none can,
-it **halts loudly** rather than manufacturing hash blocks. That cost is signed for deliberately.
+The model-compute floor is a **class**: a portable, integer-only execution class held permanently
+Active (**ADR-0039**, **ADR-0040**). It is distinct from the narrow heartbeat lane: BASE-0 provides
+the cheapest valid inference class, while heartbeat provides no model share or inference reward.
 
 | | |
 |---|---|
@@ -197,6 +219,10 @@ shares  — granted, per registration:     conserved to 1000‰ by donation arit
 - **A share is granted at registration** and conserved to 1000‰ by largest-remainder donation from
   the incumbents. A share below the minimum grantable value is refused, because a zero share is a
   zero epoch budget — "a dead class registered as if it worked".
+- **Unused-budget release is not active yet.** ADR-0123 implements progressive borrowing from
+  silent classes, but every shipped preset currently leaves `palw_epoch_budget_release` unset.
+  The implementation is therefore not a claim about current Testnet-11 throughput until a network
+  deliberately schedules that fence.
 - **Post-genesis admission exists.** `verify_class_admission_v2` restates the genesis loader's
   checks against a single registration, *deriving* rather than reading — the reachable kernel set
   from the profile's own nodes, both leaf counts from the step function, and a catalog entry
@@ -217,8 +243,9 @@ still land.
 | Stage | Geometry | Status |
 |---|---|---|
 | **Floor** — `PALW_RC_BASE0_GEOMETRY` | 4 layers, `d_model` 256 | ships as the RC's liveness floor. Not a performance claim: it is the class that guarantees *someone* can always produce a block |
-| **Qwen-scale** | Qwen2.5-1.5B (28 layers, 1536/8960, 12 heads / 2 kv) and 3B (36 layers, 2048/11008, 16 / 2) | profiles landed, geometries taken from the real `config.json` and `safetensors` header, kernel **coverage 100 %**; context budget not yet solved (below) |
-| **7B → 35B → 70B** | dense transformer families over the same closed kernel catalog | roadmap. The chain-side machinery is built for it; the arithmetic pipeline is the open work |
+| **A16** | Qwen2.5-1.5B, graph-v5@512 | registered on Testnet-11; producer/panel requires the class-bound `.palwart` and tokenizer binding |
+| **QWEN36** | Qwen3.6-35B-A3B | registered on Testnet-11; producer/panel requires the class-bound `.palwq36` runtime |
+| **larger/new families** | new canonical profiles | roadmap; each must pass admission, court coverage and certification before it receives work |
 
 ### Why large classes are architecturally reachable
 
@@ -236,36 +263,18 @@ Four properties were built with exactly this in mind, and none of them degrades 
    the full `PALW_STEP_MAX_LEAVES` (2²², a 22-round bisection). Four extra prosecution rounds buy
    every class that could ever be adjudicable — this is the one decision that would have expired.
 
-### What still has to land
+### What a new class still has to prove
 
-- **Context budget.** A class is admissible only if its **longest** job — the whole declared
-  context as prefill plus one decode — fits the ladder. Checking the *typical* job instead would
-  admit a class an attacker picks the job length for. At `tile_len` 128 the shipped Qwen profiles
-  price at 132 M (1.5B) and 220 M (3B) leaves against a 4.19 M cap: inadmissible as declared.
-  `tile_len` is the knob, and it trades context against court granularity — at a 4096 context,
-  1.5B needs `tile_len` 16,384 and 3B needs 65,536, which is the maximum the type allows. **Larger
-  classes therefore need more than the tile knob**: a shorter declared context, a widened step
-  space in a future ruleset, or segmented adjudication. This is stated as an open problem, not a
-  solved one.
-- **The PTQ pipeline**, whose engine gaps decide how faithful a dense port can be: an explicit
-  RMSNorm gain (`MulElem`, rather than folding it into the next matmul and burying the outliers),
-  **GQA** (`n_head_kv < n_heads` — a shape field and an index change, no new kernel), and
-  **per-output-channel requantization** (the highest-leverage quality knob, already available
-  without touching the catalog). All three change the class id and the step space, so they are
-  settled *before* a profile is frozen, never after.
-- **Depth and the residual stream.** Measured 2026-08-21: depth is **not** a wall — 24–32 layers is
-  arithmetically reachable, and the residual highway carries ~7 adds before a feature survives only
-  as a sign. What the `i8` residual binds is *quality*, not liveness: at depth 24–32 a unity-gain
-  residual costs 2–3 bits of code range per write. The only change that enlarges that budget is a
-  wider `AddElem` (an `i16` accumulate buys 10–11 bits), which is a new kernel and an ADR-0040
-  amendment — the deliberate cost of going much deeper than Qwen scale.
-- **Hardware classes.** A class is scoped to its instruction set and build profile, by design: two
-  builds that disagree by one ULP are two networks. Accelerated (GPU/NPU) classes for large models
-  arrive as their own pinned classes with their own determinism evidence, never as a silent
-  widening of an existing one.
+Testnet-11's A16 and QWEN36 rows have moved beyond the earlier prototype limitations: they are
+registered classes with pinned profiles and artifacts. That does not make an arbitrary model
+admissible. Every new row still needs a deterministic artifact and shape profile, complete
+reachable-kernel adjudication, a worst-case job that fits the court/transport bounds, derived PWU,
+tokenizer/runtime binding, independent conformance evidence, lane certification and a granted
+share. Hardware-specific acceleration is introduced as an explicitly pinned class or execution
+regime, never as a silent widening of an existing class.
 
-Each larger class arrives the same way: an artifact and shape profile, complete kernel coverage, a
-ladder-admissible worst-case job, a derived pwu, a granted share, and its own retarget domain.
+The current operator entry point is `misaka model add`; the full process is documented in
+[`palw-model-onboarding-sdk.md`](https://github.com/MISAKA-BTC/misakas/blob/main/docs/palw-model-onboarding-sdk.md).
 
 ---
 
@@ -303,7 +312,9 @@ Always verify token information through the official website before interacting 
 
 ## Optional EVM lane
 
-An opt-in node feature, not part of the default secp-free build.
+The `kaspad` crate's default feature set includes EVM support. EVM execution is a separate domain
+from PQ-native authorization: Ethereum-compatible accounts retain secp256k1/ECDSA semantics and
+operators may choose whether to expose EVM RPC/history roles.
 
 | Property | Value |
 |---|---|
@@ -420,6 +431,9 @@ receipts or activation behaviour is a consensus change and is documented as one.
 | **ADR-0042** (`docs/adr/0042-palw-mainnet-candidate-ruleset.md`) | **The PALW-RC ruleset** — one bundle, one fork choice, one fingerprint |
 | **ADR-0044** (`docs/adr/0044-palw-free-prompt-receipts.md`) | Free-prompt receipts — your own inference mines |
 | **ADR-0045** (`docs/adr/0045-palw-class-economy-on-chain.md`) | Derived pwu, epoch budgets, granted share table |
+| **ADR-0060 / ADR-0068** | Bounded heartbeat liveness and the LLM-primary economy |
+| **ADR-0122** | One operator workflow for mining, work, model and status |
+| **ADR-0123** | Progressive unused class-budget release (implemented; dormant on shipped presets) |
 | **ADR-0027** (`docs/adr/0027-palw-slash-unilateral-fraud-proofs.md`) / **ADR-0028** (`docs/adr/0028-palw-challenge-sampling-protocol.md`) | Unilateral fraud proofs, challenge sampling |
 | **ADR-0030** (`docs/adr/0030-palw-step-function-shape-profile.md`)–**ADR-0033** (`docs/adr/0033-palw-credit-gate-wiring.md`) | Step space, transcendentals, escrow, credit gate |
 | **ADR-0041** (`docs/adr/0041-palw-pruning-proof-verification.md`) | Pruning-proof verification |
