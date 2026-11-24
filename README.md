@@ -1,4 +1,4 @@
-# MISAKA — LLM inference work on a post-quantum BlockDAG
+#LLM inference work on a post-quantum BlockDAG
 
 **PALW · Native UTXO accounting · Model-free node verification · BILI**
 
