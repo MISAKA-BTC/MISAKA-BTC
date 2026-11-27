@@ -1,10 +1,10 @@
 # LLM inference work on a post-quantum BlockDAG
 
-**PALW · Native UTXO accounting · Model-free node verification · BILI**
+**PALW · Native UTXO accounting · Model-free node verification · LMC**
 
 MISAKA is an independent Layer 1 derived from [rusty-kaspa](https://github.com/kaspanet/rusty-kaspa). Its protocol connects registered LLM execution to block-production rights, using a BlockDAG for ordering and a native UTXO ledger for value transfer.
 
-The native asset is **Misaka**, ticker **BILI**. Native transaction authorization uses **ML-DSA-87**. Producers execute registered models; selected Panels verify claims; nodes authenticate the evidence and adjudicate bounded computational disputes.
+The native asset is **LLMarket coin**, ticker **LMC**. Native transaction authorization uses **ML-DSA-87**. Producers execute registered models; selected Panels verify claims; nodes authenticate the evidence and adjudicate bounded computational disputes.
 
 The governing verification principle is:
 
@@ -212,7 +212,7 @@ Let **R** be the model-attributed worker reward after the applicable pricing and
 | Allocation | Rule |
 | --- | --- |
 | Position purchase | `B = floor(300 × R / 1000)` |
-| Permanent-liquidity BILI | `A = floor(200 × R / 1000)` |
+| Permanent-liquidity LMC | `A = floor(200 × R / 1000)` |
 | Remaining reward | `D = R − B − A` |
 
 The nominal split is **30% purchase, 20% permanent liquidity and 50% remaining reward**. Integer rounding is resolved by the formulas above.
@@ -235,7 +235,7 @@ The underlying pool assets remain usable for ordinary swaps. The locked receipt 
 
 ### Trading and transfers
 
-| Operation | BILI burn | Owner allocation | Remaining amount |
+| Operation | LMC burn | Owner allocation | Remaining amount |
 | --- | ---: | ---: | ---: |
 | Normal AMM buy or sell | 5% | 3% total | 92%, subject to integer rounding and the trade quote |
 | Protocol purchase and liquidity legs | No additional trade burn | No additional direct owner payment | Governed by the reward allocation above |
