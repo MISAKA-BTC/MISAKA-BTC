@@ -2,7 +2,7 @@
 
 **PALW · Native UTXO accounting · Model-free node verification · LMC**
 
-MISAKA is an independent Layer 1 derived from [rusty-kaspa](https://github.com/kaspanet/rusty-kaspa). Its protocol connects registered LLM execution to block-production rights, using a BlockDAG for ordering and a native UTXO ledger for value transfer.
+LMC is an independent Layer 1 derived from [rusty-kaspa](https://github.com/kaspanet/rusty-kaspa). Its protocol connects registered LLM execution to block-production rights, using a BlockDAG for ordering and a native UTXO ledger for value transfer.
 
 The native asset is **LLMarket coin**, ticker **LMC**. Native transaction authorization uses **ML-DSA-87**. Producers execute registered models; selected Panels verify claims; nodes authenticate the evidence and adjudicate bounded computational disputes.
 
@@ -271,9 +271,9 @@ See [claim diagnostic schema][diagnostics], [TB1 custody types][custody] and [th
 
 ## 10. Native authorization and the optional EVM lane
 
-Native transactions use the ML-DSA authorization domain and MISAKA's native UTXO rules. Native addresses retain the `misaka`, `misakatest` and `misakadev` network prefixes.
+Native transactions use the ML-DSA authorization domain and LMC's native UTXO rules. Native addresses retain the `misaka`, `misakatest` and `misakadev` network prefixes.
 
-The optional EVM execution lane uses a separate Ethereum-compatible signature and execution domain. Its compatibility does not replace MISAKA's BlockDAG consensus or native authorization.
+The optional EVM execution lane uses a separate Ethereum-compatible signature and execution domain. Its compatibility does not replace LMC's BlockDAG consensus or native authorization.
 
 Post-quantum native authorization is not a claim that every transport channel or optional execution environment uses post-quantum cryptography.
 
@@ -301,7 +301,7 @@ Model admission, individual computation verification, independent certification 
 
 ## Attribution and license
 
-MISAKA is derived from [kaspanet/rusty-kaspa](https://github.com/kaspanet/rusty-kaspa). Upstream `kaspa-*` crate and binary names are retained where appropriate to preserve source history.
+LMC is derived from [kaspanet/rusty-kaspa](https://github.com/kaspanet/rusty-kaspa). Upstream `kaspa-*` crate and binary names are retained where appropriate to preserve source history.
 
 The source is distributed under the [ISC License][license]. See the repository's [contribution guidelines][contributing] and [security policy][security].
 
