@@ -189,7 +189,7 @@ Both routes require technical compatibility. A YES decision cannot authorize uns
 
 ### Model origin and management authority
 
-| Model category | Adoption | BFT model stop / resume | MisakaOption treatment |
+| Model category | Adoption | BFT model stop / resume | LLMarket treatment |
 | --- | --- | --- | --- |
 | **Original genesis model** | Fixed by the original genesis manifest | Outside BFT model-management authority | No Option market; eligible worker reward goes to the Miner. |
 | **Additional model** | KERNEL_AUTO or BFT_DECISION | Applies to both adoption routes | Uses MOE2. |
@@ -203,7 +203,7 @@ All model categories remain subject to their execution, Panel, Court, certificat
 
 See [MAD2: kernel-auto and BFT model adoption][mad2].
 
-## 8. MisakaOption / ModelPosition economics
+## 8. LLMarket / ModelPosition economics
 
 MOE2 applies to **additional models**. Registration of an additional model and creation of its unique market form one atomic transition. Market existence does not grant mining eligibility.
 
